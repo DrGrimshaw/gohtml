@@ -30,39 +30,53 @@ func Encode(structure interface{}) (string, error) {
 			return "", err
 		}
 
-		subOutput := ""
-
-		elementOptions := ""
-		if hfs.Class != "" {
-			elementOptions = fmt.Sprintf(" class='%s'", hfs.Class)
+		subOutput, err := parseByType(v.Field(i).Interface(), hfs, false)
+		if err != nil {
+			return "", err
 		}
 
-		label := ""
-		if hfs.Label != "" {
-			label = fmt.Sprintf("<span>%s</span>", hfs.Label)
-		}
+		output += subOutput
+	}
 
-		switch reflect.TypeOf(v.Field(i).Interface()).Kind() {
-		case reflect.Slice:
-			s := reflect.ValueOf(v.Field(i).Interface())
-			for j := 0; j < s.Len(); j++ {
-				sliceOutput, err := Encode(s.Index(j).Interface())
-				if err != nil {
-					return "", err
-				}
+	return output, nil
+}
 
-				output += fmt.Sprintf("<%s%s>%s%s</%s>", hfs.Element, elementOptions, label, sliceOutput, hfs.Element)
-			}
-		case reflect.Struct:
-			subOutput, err = Encode(v.Field(i).Interface())
+func parseByType(i interface{}, hfs htmlFieldStructure, isSlice bool) (string, error) {
+	elementOptions := ""
+	if hfs.Class != "" {
+		elementOptions = fmt.Sprintf(" class='%s'", hfs.Class)
+	}
+
+	label := ""
+	if hfs.Label != "" {
+		label = fmt.Sprintf("<span>%s</span>", hfs.Label)
+	}
+
+	output := ""
+	switch reflect.TypeOf(i).Kind() {
+	case reflect.Slice:
+		s := reflect.ValueOf(i)
+		for j := 0; j < s.Len(); j++ {
+			sliceOutput, err := parseByType(s.Index(j).Interface(), hfs, true)
 			if err != nil {
 				return "", err
 			}
 
-			output += fmt.Sprintf("<div>%s<%s%s>%s</%s></div>", label, hfs.Element, elementOptions, subOutput, hfs.Element)
-		default:
-			output += fmt.Sprintf("<div>%s<%s%s>%v</%s></div>", label, hfs.Element, elementOptions, v.Field(i).Interface(), hfs.Element)
+			output += sliceOutput
 		}
+	case reflect.Struct:
+		subOutput, err := Encode(i)
+		if err != nil {
+			return "", err
+		}
+
+		if isSlice {
+			output += fmt.Sprintf("<%s%s>%s</%s>", hfs.Element, elementOptions, subOutput, hfs.Element)
+		} else {
+			output += fmt.Sprintf("<div>%s<%s%s>%s</%s></div>", label, hfs.Element, elementOptions, subOutput, hfs.Element)
+		}
+	default:
+		output += fmt.Sprintf("<div>%s<%s%s>%v</%s></div>", label, hfs.Element, elementOptions, i, hfs.Element)
 	}
 
 	return output, nil
