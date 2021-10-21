@@ -29,6 +29,12 @@ type arrStruct struct {
 	NameList simpleStructContainer `label:"Names" element:"ul"`
 }
 
+type complexArrStruct struct {
+	NameList struct{
+		Names []string `element:"li"`
+	} `label:"Names" element:"ul"`
+}
+
 type address struct {
 	Street string `label:"Street" element:"span" class:"street"`
 	County string `label:"County" element:"span" class:"county"`
@@ -81,4 +87,19 @@ func TestEncode_Arr(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, "<div><span>Names</span><ul><li><div><span>Name</span><span class='name'>John Doe</span></div></li><li><div><span>Name</span><span class='name'>Jane Doe</span></div></li></ul></div>", result)
+}
+
+func TestEncode_ComplexArr(t *testing.T) {
+	sut := complexArrStruct{
+		NameList: struct {
+			Names []string `element:"li"`
+		}{
+			Names: []string{"John Doe","Jane Doe"},
+		},
+	}
+
+	result, err := Encode(sut)
+
+	assert.Nil(t, err)
+	assert.Equal(t, "<div><span>Names</span><ul><li>John Doe</li><li>Jane Doe</li></ul></div>", result)
 }

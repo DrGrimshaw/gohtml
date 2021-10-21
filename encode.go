@@ -70,13 +70,9 @@ func parseByType(i interface{}, hfs htmlFieldStructure, isSlice bool) (string, e
 			return "", err
 		}
 
-		if isSlice {
-			output += fmt.Sprintf("<%s%s>%s</%s>", hfs.Element, elementOptions, subOutput, hfs.Element)
-		} else {
-			output += fmt.Sprintf("<div>%s<%s%s>%s</%s></div>", label, hfs.Element, elementOptions, subOutput, hfs.Element)
-		}
+		output += sprintOutput(isSlice, label, hfs.Element, elementOptions, subOutput)
 	default:
-		output += fmt.Sprintf("<div>%s<%s%s>%v</%s></div>", label, hfs.Element, elementOptions, i, hfs.Element)
+		output += sprintOutput(isSlice, label, hfs.Element, elementOptions, i)
 	}
 
 	return output, nil
@@ -109,4 +105,15 @@ func parseTag(field reflect.StructField) (htmlFieldStructure, error) {
 		Element: element,
 		Class: class,
 	}, nil
+}
+
+const slicePattern = "<%s%s>%v</%s>"
+const wrapPattern = "<div>%s<%s%s>%v</%s></div>"
+
+func sprintOutput(isSlice bool, label string, element string, elementOptions string, object interface{}) string {
+	if isSlice {
+		return fmt.Sprintf(slicePattern, element, elementOptions, object, element)
+	} else {
+		return fmt.Sprintf(wrapPattern, label, element, elementOptions, object, element)
+	}
 }
