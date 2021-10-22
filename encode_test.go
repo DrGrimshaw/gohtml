@@ -35,6 +35,16 @@ type complexArrStruct struct {
 	} `label:"Names" element:"ul"`
 }
 
+type tableStruct struct {
+	People []person `label:"People" row:"true"`
+}
+
+type person struct{
+	Name string `element:"span" label:"Name"`
+	Age string `element:"span" label:"Age"`
+	Location string `element:"span" label:"location"`
+}
+
 type address struct {
 	Street string `label:"Street" element:"span" class:"street"`
 	County string `label:"County" element:"span" class:"county"`
@@ -102,4 +112,18 @@ func TestEncode_ComplexArr(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, "<div><span>Names</span><ul><li>John Doe</li><li>Jane Doe</li></ul></div>", result)
+}
+
+func TestEncode_Table(t *testing.T) {
+	sut := tableStruct{
+		People: []person{
+			{Name:"John Doe", Age: "29", Location: "Washington DC"},
+			{Name:"Jane Doe", Age: "25", Location: "London"},
+		},
+	}
+
+	result, err := Encode(sut)
+
+	assert.Nil(t, err)
+	assert.Equal(t, "<table><tr><td>Name</td><td>Age</td><td>location</td></tr><tr><td><span>John Doe</span><span>29</span><span>Washington DC</span></td></tr><tr><td><span>Jane Doe</span><span>25</span><span>London</span></td></tr></table>", result)
 }
