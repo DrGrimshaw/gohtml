@@ -21,10 +21,10 @@ const rowTag = "row"
 // Encode finds and extracts data for HTML output
 // The only error that returns is due to a malformed struct tags
 func Encode(structure interface{}) (string, error) {
-	return encode(structure, false)
+	return encode(structure, false, "")
 }
 
-func encode(structure interface{}, isRow bool) (string, error) {
+func encode(structure interface{}, isRow bool, wrap string) (string, error) {
 	v := reflect.ValueOf(structure)
 	typeOfS := v.Type()
 
@@ -36,7 +36,7 @@ func encode(structure interface{}, isRow bool) (string, error) {
 			return "", err
 		}
 
-		subOutput, err := parseByType(v.Field(i).Interface(), hfs, isRow)
+		subOutput, err := parseByType(v.Field(i).Interface(), hfs, isRow, wrap)
 		if err != nil {
 			return "", err
 		}
@@ -47,7 +47,11 @@ func encode(structure interface{}, isRow bool) (string, error) {
 	return output, nil
 }
 
-func parseByType(i interface{}, hfs htmlFieldStructure, stripElement bool) (string, error) {
+func parseByType(i interface{}, hfs htmlFieldStructure, stripElement bool, wrapElement string) (string, error) {
+	if wrapElement == "" {
+		wrapElement = "%s"
+	}
+
 	elementOptions := ""
 	if hfs.Class != "" {
 		elementOptions = fmt.Sprintf(" class='%s'", hfs.Class)
@@ -75,18 +79,14 @@ func parseByType(i interface{}, hfs htmlFieldStructure, stripElement bool) (stri
 					if err != nil {
 						return "", err
 					}
-					titleRowOutput += fmt.Sprintf(strippedPattern, hfs.Element, elementOptions, arrItemTags.Label, hfs.Element)
+					titleRowOutput += fmt.Sprintf(colPattern, arrItemTags.Label)
 				}
 				arrOutput += fmt.Sprintf(rowPattern, titleRowOutput)
 			}
 
-			sliceOutput, err := parseByType(s.Index(j).Interface(), hfs, true)
+			sliceOutput, err := parseByType(s.Index(j).Interface(), hfs, true, "")
 			if err != nil {
 				return "", err
-			}
-
-			if hfs.IsRow {
-				sliceOutput = fmt.Sprintf(rowPattern, sliceOutput)
 			}
 
 			arrOutput += sliceOutput
@@ -99,7 +99,12 @@ func parseByType(i interface{}, hfs htmlFieldStructure, stripElement bool) (stri
 		output += arrOutput
 
 	case reflect.Struct:
-		subOutput, err := encode(i, hfs.IsRow)
+		wrap := ""
+		if hfs.IsRow {
+			wrap = 	colPattern
+		}
+
+		subOutput, err := encode(i, hfs.IsRow, wrap)
 		if err != nil {
 			return "", err
 		}
@@ -108,6 +113,8 @@ func parseByType(i interface{}, hfs htmlFieldStructure, stripElement bool) (stri
 	default:
 		output += sprintOutput(stripElement, label, hfs.Element, elementOptions, i)
 	}
+
+	output = fmt.Sprintf(wrapElement, output)
 
 	return output, nil
 }
@@ -137,7 +144,7 @@ func parseTag(field reflect.StructField) (htmlFieldStructure, error) {
 
 	if htmlRowTag, err := tags.Get(rowTag); err == nil && htmlRowTag.Name == "true" {
 		isRow = true
-		element = "td"
+		element = "tr"
 	}
 
 	return htmlFieldStructure{
@@ -150,6 +157,7 @@ func parseTag(field reflect.StructField) (htmlFieldStructure, error) {
 
 const strippedPattern = "<%s%s>%v</%s>"
 const rowPattern = "<tr>%v</tr>"
+const colPattern = "<td>%v</td>"
 const wrapPattern = "<div>%s<%s%s>%v</%s></div>"
 
 func sprintOutput(isSlice bool, label string, element string, elementOptions string, object interface{}) string {

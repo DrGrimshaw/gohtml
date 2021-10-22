@@ -36,7 +36,7 @@ type complexArrStruct struct {
 }
 
 type tableStruct struct {
-	People []person `label:"People" row:"true"`
+	People []person `label:"Data" row:"true"`
 }
 
 type person struct{
@@ -50,6 +50,19 @@ type address struct {
 	County string `label:"County" element:"span" class:"county"`
 	Country string `label:"Country" element:"span" class:"country"`
 	Postcode string `label:"Postcode" element:"span" class:"postcode"`
+}
+
+type complexTableStruct struct {
+	Data []complexRowStruct `label:"Data" row:"true"`
+}
+
+type complexRowStruct struct {
+	Label            string `label:"Label" element:"span"`
+	Type             string `label:"Type" element:"span"`
+	Description string `label:"Description" element:"span"`
+	NameList struct {
+		Names []string `element:"li"`
+	} `label:"Name List" element:"ul"`
 }
 
 func TestEncode_Simple(t *testing.T) {
@@ -125,5 +138,25 @@ func TestEncode_Table(t *testing.T) {
 	result, err := Encode(sut)
 
 	assert.Nil(t, err)
-	assert.Equal(t, "<table><tr><td>Name</td><td>Age</td><td>location</td></tr><tr><td><span>John Doe</span><span>29</span><span>Washington DC</span></td></tr><tr><td><span>Jane Doe</span><span>25</span><span>London</span></td></tr></table>", result)
+	assert.Equal(t, "<table><tr><td>Name</td><td>Age</td><td>location</td></tr><tr><td><span>John Doe</span></td><td><span>29</span></td><td><span>Washington DC</span></td></tr><tr><td><span>Jane Doe</span></td><td><span>25</span></td><td><span>London</span></td></tr></table>", result)
+}
+
+func TestEncode_TableComplex(t *testing.T) {
+	sut := complexTableStruct{
+		Data: []complexRowStruct{{
+			Label:       "EX1",
+			Type:        "Random",
+			Description: "This is a random example",
+			NameList: struct {
+				Names []string `element:"li"`
+			}{
+				Names: []string{"John Doe", "Jane Doe"},
+			},
+		}},
+	}
+
+	result, err := Encode(sut)
+
+	assert.Nil(t, err)
+	assert.Equal(t, "<table><tr><td>Label</td><td>Type</td><td>Description</td><td>Name List</td></tr><tr><td><span>EX1</span></td><td><span>Random</span></td><td><span>This is a random example</span></td><td><ul><li>John Doe</li><li>Jane Doe</li></ul></td></tr></table>", result)
 }
