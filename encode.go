@@ -81,7 +81,7 @@ func parseByType(i interface{}, hfs htmlFieldStructure, stripElement bool, wrapE
 					}
 					titleRowOutput += fmt.Sprintf(colPattern, arrItemTags.Label)
 				}
-				arrOutput += fmt.Sprintf(rowPattern, titleRowOutput)
+				arrOutput += fmt.Sprintf(titleRowPattern, titleRowOutput)
 			}
 
 			sliceOutput, err := parseByType(s.Index(j).Interface(), hfs, true, "")
@@ -157,6 +157,7 @@ func parseTag(field reflect.StructField) (htmlFieldStructure, error) {
 
 const strippedPattern = "<%s%s>%v</%s>"
 const rowPattern = "<tr>%v</tr>"
+const titleRowPattern = "<thead><tr>%v</tr></thead>"
 const colPattern = "<td>%v</td>"
 const wrapPattern = "<div>%s<%s%s>%v</%s></div>"
 

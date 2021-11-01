@@ -158,5 +158,5 @@ func TestEncode_TableComplex(t *testing.T) {
 	result, err := Encode(sut)
 
 	assert.Nil(t, err)
-	assert.Equal(t, "<table><tr><td>Label</td><td>Type</td><td>Description</td><td>Name List</td></tr><tr><td><span>EX1</span></td><td><span>Random</span></td><td><span>This is a random example</span></td><td><ul><li>John Doe</li><li>Jane Doe</li></ul></td></tr></table>", result)
+	assert.Equal(t, "<table><thead><tr><td>Label</td><td>Type</td><td>Description</td><td>Name List</td></tr></thead><tr><td><span>EX1</span></td><td><span>Random</span></td><td><span>This is a random example</span></td><td><ul><li>John Doe</li><li>Jane Doe</li></ul></td></tr></table>", result)
 }
