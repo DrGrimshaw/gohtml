@@ -6,63 +6,63 @@ import (
 )
 
 type simpleStruct struct {
-	Name string `label:"Name" element:"span" class:"name"`
+	Name string `html:"l=Name,e=span,c=name"`
 }
 
 type differentTypeStruct struct {
-	Name string `label:"Name" element:"span" class:"name"`
-	Number int `label:"Number" element:"span" class:"number"`
-	Boolean bool `label:"Boolean" element:"span" class:"boolean"`
-	Decimal float64 `label:"Decimal" element:"span" class:"decimal"`
+	Name string `html:"l=Name,e=span,c=name"`
+	Number int `html:"l=Number,e=span,c=number"`
+	Boolean bool `html:"l=Boolean,e=span,c=boolean"`
+	Decimal float64 `html:"l=Decimal,e=span,c=decimal"`
 }
 
 type subTypeStruct struct {
-	Name    string  `label:"Name" element:"span" class:"name"`
-	Address address `label:"address" class:"address"`
+	Name    string  `html:"l=Name,e=span,c=name"`
+	Address address `html:"l=address,c=address"`
 }
 
 type simpleStructContainer struct {
-	Names []simpleStruct `element:"li"`
+	Names []simpleStruct `html:"e=li"`
 }
 
 type arrStruct struct {
-	NameList simpleStructContainer `label:"Names" element:"ul"`
+	NameList simpleStructContainer `html:"l=Names,e=ul"`
 }
 
 type complexArrStruct struct {
 	NameList struct{
-		Names []string `element:"li"`
-	} `label:"Names" element:"ul"`
+		Names []string `html:"e=li"`
+	} `html:"l=Names,e=ul"`
 }
 
 type tableStruct struct {
-	People []person `label:"Data" row:"true"`
+	People []person `html:"l=Data,row"`
 }
 
 type person struct{
-	Name string `element:"span" label:"Name"`
-	Age string `element:"span" label:"Age"`
-	Location string `element:"span" label:"location"`
+	Name string `html:"e=span,l=Name,omitempty"`
+	Age string `html:"e=span,l=Age"`
+	Location string `html:"e=span,l=location"`
 }
 
 type address struct {
-	Street string `label:"Street" element:"span" class:"street"`
-	County string `label:"County" element:"span" class:"county"`
-	Country string `label:"Country" element:"span" class:"country"`
-	Postcode string `label:"Postcode" element:"span" class:"postcode"`
+	Street string `html:"l=Street,e=span,c=street"`
+	County string `html:"l=County,e=span,c=county"`
+	Country string `html:"l=Country,e=span,c=country"`
+	Postcode string `html:"l=Postcode,e=span,c=postcode"`
 }
 
 type complexTableStruct struct {
-	Data []complexRowStruct `label:"Data" row:"true"`
+	Data []complexRowStruct `html:"l=Data,row"`
 }
 
 type complexRowStruct struct {
-	Label            string `label:"Label" element:"span"`
-	Type             string `label:"Type" element:"span"`
-	Description string `label:"Description" element:"span"`
+	Label            string `html:"l=Label,e=span"`
+	Type             string `html:"l=Type,e=span"`
+	Description string `html:"l=Description,e=span"`
 	NameList struct {
-		Names []string `element:"li"`
-	} `label:"Name List" element:"ul"`
+		Names []string `html:"e=li"`
+	} `html:"l=Name List,e=ul"`
 }
 
 func TestEncode_Simple(t *testing.T) {
@@ -115,7 +115,7 @@ func TestEncode_Arr(t *testing.T) {
 func TestEncode_ComplexArr(t *testing.T) {
 	sut := complexArrStruct{
 		NameList: struct {
-			Names []string `element:"li"`
+			Names []string `html:"e=li"`
 		}{
 			Names: []string{"John Doe","Jane Doe"},
 		},
@@ -138,7 +138,7 @@ func TestEncode_Table(t *testing.T) {
 	result, err := Encode(sut)
 
 	assert.Nil(t, err)
-	assert.Equal(t, "<table><tr><td>Name</td><td>Age</td><td>location</td></tr><tr><td><span>John Doe</span></td><td><span>29</span></td><td><span>Washington DC</span></td></tr><tr><td><span>Jane Doe</span></td><td><span>25</span></td><td><span>London</span></td></tr></table>", result)
+	assert.Equal(t, "<table><thead><tr><td>Name</td><td>Age</td><td>location</td></tr></thead><tr><td><span>John Doe</span></td><td><span>29</span></td><td><span>Washington DC</span></td></tr><tr><td><span>Jane Doe</span></td><td><span>25</span></td><td><span>London</span></td></tr></table>", result)
 }
 
 func TestEncode_TableComplex(t *testing.T) {
@@ -148,7 +148,7 @@ func TestEncode_TableComplex(t *testing.T) {
 			Type:        "Random",
 			Description: "This is a random example",
 			NameList: struct {
-				Names []string `element:"li"`
+				Names []string `html:"e=li"`
 			}{
 				Names: []string{"John Doe", "Jane Doe"},
 			},
@@ -159,4 +159,16 @@ func TestEncode_TableComplex(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, "<table><thead><tr><td>Label</td><td>Type</td><td>Description</td><td>Name List</td></tr></thead><tr><td><span>EX1</span></td><td><span>Random</span></td><td><span>This is a random example</span></td><td><ul><li>John Doe</li><li>Jane Doe</li></ul></td></tr></table>", result)
+}
+
+func TestEncode_OmitEmpty(t *testing.T) {
+	sut := person{
+		Age:      "22",
+		Location: "Washington DC",
+	}
+
+	result, err := Encode(sut)
+
+	assert.Nil(t, err)
+	assert.Equal(t,"<div><span>Age</span><span>22</span></div><div><span>location</span><span>Washington DC</span></div>",result)
 }

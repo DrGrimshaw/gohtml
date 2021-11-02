@@ -7,7 +7,7 @@ import (
 )
 
 type internalStruct struct {
-	Name string `label:"Name" element:"span" class:"name"`
+	Name string `html:"l=Name,e=span,c=name"`
 }
 
 func TestParseTag(t *testing.T) {

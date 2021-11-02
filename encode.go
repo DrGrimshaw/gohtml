@@ -2,21 +2,44 @@ package gohtml
 
 import (
 	"fmt"
-	"github.com/fatih/structtag"
 	"reflect"
+	"regexp"
+	"strings"
 )
 
+// htmlFieldStructure is the struct form of the tag result
 type htmlFieldStructure struct {
 	Label string
 	Element string
 	Class string
 	IsRow bool
+	OmitEmpty bool
 }
 
+// Initial root tag searched for in metadata `html:"<opts...>"`
+const rootTag = "html"
+
+// Sub options, following tags to be used as follows `html:"l=Example,e=span,c=customclass"`
 const labelTag = "label"
+const shortLabelTag = "l"
 const elementTag = "element"
+const shortElementTag = "e"
 const classTag = "class"
-const rowTag = "row"
+const shortClassTag = "c"
+// Sub options without values to be used as follows `html:"row,omitempty"`
+const optRowTag = "row"
+const optOmitEmptyTag = "omitempty"
+
+// Different patterns used for formatting output throughout
+const labelPattern = "<span>%s</span>"
+// Stripped pattern used for slices
+const strippedPattern = "<%s%s>%v</%s>"
+// Wrap pattern used by default
+const wrapPattern = "<div>%s<%s%s>%v</%s></div>"
+// These patterns are used in the row option
+const tablePattern = "<table>%s</table>"
+const titleRowPattern = "<thead><tr>%v</tr></thead>"
+const colPattern = "<td>%v</td>"
 
 // Encode finds and extracts data for HTML output
 // The only error that returns is due to a malformed struct tags
@@ -59,7 +82,7 @@ func parseByType(i interface{}, hfs htmlFieldStructure, stripElement bool, wrapE
 
 	label := ""
 	if hfs.Label != "" {
-		label = fmt.Sprintf("<span>%s</span>", hfs.Label)
+		label = fmt.Sprintf(labelPattern, hfs.Label)
 	}
 
 	output := ""
@@ -93,7 +116,7 @@ func parseByType(i interface{}, hfs htmlFieldStructure, stripElement bool, wrapE
 		}
 
 		if hfs.IsRow {
-			arrOutput = fmt.Sprintf("<table>%s</table>", arrOutput)
+			arrOutput = fmt.Sprintf(tablePattern, arrOutput)
 		}
 
 		output += arrOutput
@@ -111,60 +134,84 @@ func parseByType(i interface{}, hfs htmlFieldStructure, stripElement bool, wrapE
 
 		output += sprintOutput(stripElement, label, hfs.Element, elementOptions, subOutput)
 	default:
-		output += sprintOutput(stripElement, label, hfs.Element, elementOptions, i)
+		if !(hfs.OmitEmpty && isEmptyValue(reflect.ValueOf(i))) {
+			output += sprintOutput(stripElement, label, hfs.Element, elementOptions, i)
+		}
 	}
 
-	output = fmt.Sprintf(wrapElement, output)
-
-	return output, nil
+	return fmt.Sprintf(wrapElement, output), nil
 }
 
 func parseTag(field reflect.StructField) (htmlFieldStructure, error) {
-	tags, err := structtag.Parse(string(field.Tag))
-	if err != nil {
-		return htmlFieldStructure{}, err
+	hfs := htmlFieldStructure{
+		Label:     "",
+		Element:   "div",
+		Class:     "",
+		IsRow:     false,
+		OmitEmpty: false,
 	}
 
-	label := ""
-	element := "div"
-	class := ""
-	isRow := false
+	var subOptSearch = regexp.MustCompile(`.*=.*`)
 
-	if htmlLabelTag, err := tags.Get(labelTag); err == nil {
-		label = htmlLabelTag.Name
+	if htmlTag, ok := field.Tag.Lookup(rootTag); ok {
+		for _, v := range strings.Split(htmlTag,",") {
+			if subOptSearch.MatchString(v) {
+				subOpts := strings.Split(v,"=")
+
+				if len(subOpts) != 2 {
+					continue
+				}
+
+				switch subOpts[0] {
+				case labelTag,shortLabelTag:
+					hfs.Label = subOpts[1]
+				case elementTag,shortElementTag:
+					hfs.Element = subOpts[1]
+				case classTag,shortClassTag:
+					hfs.Class = subOpts[1]
+				}
+
+				continue
+			}
+
+			switch v {
+			case optRowTag:
+				hfs.IsRow = true
+				hfs.Element = "tr"
+			case optOmitEmptyTag:
+				hfs.OmitEmpty = true
+			}
+		}
 	}
 
-	if htmlElementTag, err := tags.Get(elementTag); err == nil {
-		element = htmlElementTag.Name
-	}
-
-	if htmlClassTag, err := tags.Get(classTag); err == nil {
-		class = htmlClassTag.Name
-	}
-
-	if htmlRowTag, err := tags.Get(rowTag); err == nil && htmlRowTag.Name == "true" {
-		isRow = true
-		element = "tr"
-	}
-
-	return htmlFieldStructure{
-		Label: label,
-		Element: element,
-		Class: class,
-		IsRow: isRow,
-	}, nil
+	return hfs, nil
 }
 
-const strippedPattern = "<%s%s>%v</%s>"
-const rowPattern = "<tr>%v</tr>"
-const titleRowPattern = "<thead><tr>%v</tr></thead>"
-const colPattern = "<td>%v</td>"
-const wrapPattern = "<div>%s<%s%s>%v</%s></div>"
-
+// sprintOutput decides on the method of formatting to use depending on whether it's a slice
 func sprintOutput(isSlice bool, label string, element string, elementOptions string, object interface{}) string {
 	if isSlice {
 		return fmt.Sprintf(strippedPattern, element, elementOptions, object, element)
-	} else {
-		return fmt.Sprintf(wrapPattern, label, element, elementOptions, object, element)
 	}
+
+	return fmt.Sprintf(wrapPattern, label, element, elementOptions, object, element)
+}
+
+// isEmptyValue func was lifted wholesale from the JSON encoding package as
+// it holds the exact same functionality required for omitempty
+func isEmptyValue(v reflect.Value) bool {
+	switch v.Kind() {
+	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
+		return v.Len() == 0
+	case reflect.Bool:
+		return !v.Bool()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return v.Int() == 0
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return v.Uint() == 0
+	case reflect.Float32, reflect.Float64:
+		return v.Float() == 0
+	case reflect.Interface, reflect.Ptr:
+		return v.IsNil()
+	}
+	return false
 }

@@ -7,13 +7,14 @@ Using the "reflect" package and recursion this package is able to convert a comp
  - [X] Struct
  - [X] Embedded struct
  - [X] Slice
+ - [X] Table encode option
+ - [X] Omit Empty
  - [ ] Map (Needs implementation and testing)
  - [ ] Custom ID (Unsure on whether this is needed)
- - [ ] Table encode option (Nice to have)
 
-#### Example 
+#### Examples
 
-##### Code
+##### Simple Encode
 ```go
 package main
 
@@ -23,7 +24,7 @@ import (
 )
 
 type Example struct {
-	Name string `label:"Name" element:"span" class:"name"`
+	Name string `html:"l=Name,e=span,c=name"`
 }
 
 func main() {
@@ -34,6 +35,49 @@ func main() {
 ##### Output
 ```html
 <div><span>Name</span><span class='name'>John</span></div>
+```
+##### Table Format
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/DrGrimshaw/gohtml"
+)
+
+type Example struct {
+	Name string `html:"l=Name,e=span,c=name"`
+	Age string `html:"l=Age,e=span,c=age"`
+	Location string `html:"l=Location,e=span,c=location"`
+}
+
+type ExampleArr struct {
+    Examples []Example `html:"row"`
+}
+
+func main() {
+    tableExample := ExampleArr{Examples: []Example{{Name: "John Doe",Age: "30",Location: "Washington DC"}}}
+
+    fmt.Print(gohtml.Encode(tableExample))
+}
+```
+
+##### Output
+```html
+<table>
+    <thead>
+        <tr>
+            <td>Name</td>
+            <td>Age</td>
+            <td>Location</td>
+        </tr>
+    </thead>
+    <tr>
+        <td><span class='name'>John Doe</span></td>
+        <td><span class='age'>30</span></td>
+        <td><span class='location'>Washington DC</span></td>
+    </tr>
+</table>
 ```
 
 ![Gopher mascot](mascot.png)
