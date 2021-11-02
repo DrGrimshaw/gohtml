@@ -9,9 +9,9 @@ type simpleStruct struct {
 }
 
 type differentTypeStruct struct {
-	Name string `html:"l=Name,e=span,c=name"`
-	Number int `html:"l=Number,e=span,c=number"`
-	Boolean bool `html:"l=Boolean,e=span,c=boolean"`
+	Name    string  `html:"l=Name,e=span,c=name"`
+	Number  int     `html:"l=Number,e=span,c=number"`
+	Boolean bool    `html:"l=Boolean,e=span,c=boolean"`
 	Decimal float64 `html:"l=Decimal,e=span,c=decimal"`
 }
 
@@ -29,7 +29,7 @@ type arrStruct struct {
 }
 
 type complexArrStruct struct {
-	NameList struct{
+	NameList struct {
 		Names []string `html:"e=li"`
 	} `html:"l=Names,e=ul"`
 }
@@ -38,16 +38,16 @@ type tableStruct struct {
 	People []person `html:"l=Data,row"`
 }
 
-type person struct{
-	Name string `html:"e=span,l=Name,omitempty"`
-	Age string `html:"e=span,l=Age"`
+type person struct {
+	Name     string `html:"e=span,l=Name,omitempty"`
+	Age      string `html:"e=span,l=Age"`
 	Location string `html:"e=span,l=location"`
 }
 
 type address struct {
-	Street string `html:"l=Street,e=span,c=street"`
-	County string `html:"l=County,e=span,c=county"`
-	Country string `html:"l=Country,e=span,c=country"`
+	Street   string `html:"l=Street,e=span,c=street"`
+	County   string `html:"l=County,e=span,c=county"`
+	Country  string `html:"l=Country,e=span,c=country"`
 	Postcode string `html:"l=Postcode,e=span,c=postcode"`
 }
 
@@ -56,10 +56,10 @@ type complexTableStruct struct {
 }
 
 type complexRowStruct struct {
-	Label            string `html:"l=Label,e=span"`
-	Type             string `html:"l=Type,e=span"`
+	Label       string `html:"l=Label,e=span"`
+	Type        string `html:"l=Type,e=span"`
 	Description string `html:"l=Description,e=span"`
-	NameList struct {
+	NameList    struct {
 		Names []string `html:"e=li"`
 	} `html:"l=Name List,e=ul"`
 }
@@ -83,8 +83,8 @@ func TestEncode_Simple(t *testing.T) {
 
 func TestEncode_DifferentTypes(t *testing.T) {
 	sut := differentTypeStruct{
-		Name: "John",
-		Number: 23,
+		Name:    "John",
+		Number:  23,
 		Boolean: false,
 		Decimal: 3.45,
 	}
@@ -116,7 +116,7 @@ func TestEncode_ComplexArr(t *testing.T) {
 		NameList: struct {
 			Names []string `html:"e=li"`
 		}{
-			Names: []string{"John Doe","Jane Doe"},
+			Names: []string{"John Doe", "Jane Doe"},
 		},
 	}
 
@@ -129,8 +129,8 @@ func TestEncode_ComplexArr(t *testing.T) {
 func TestEncode_Table(t *testing.T) {
 	sut := tableStruct{
 		People: []person{
-			{Name:"John Doe", Age: "29", Location: "Washington DC"},
-			{Name:"Jane Doe", Age: "25", Location: "London"},
+			{Name: "John Doe", Age: "29", Location: "Washington DC"},
+			{Name: "Jane Doe", Age: "25", Location: "London"},
 		},
 	}
 
@@ -159,8 +159,6 @@ func TestEncode_TableComplex(t *testing.T) {
 	assertNil(t, err)
 	assertEqual(t, "<table><thead><tr><td>Label</td><td>Type</td><td>Description</td><td>Name List</td></tr></thead><tr><td><span>EX1</span></td><td><span>Random</span></td><td><span>This is a random example</span></td><td><ul><li>John Doe</li><li>Jane Doe</li></ul></td></tr></table>", result)
 }
-
-
 
 func TestEncode_OmitEmpty(t *testing.T) {
 	sut := person{

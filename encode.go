@@ -9,10 +9,10 @@ import (
 
 // htmlFieldStructure is the struct form of the tag result
 type htmlFieldStructure struct {
-	Label string
-	Element string
-	Class string
-	IsRow bool
+	Label     string
+	Element   string
+	Class     string
+	IsRow     bool
 	OmitEmpty bool
 }
 
@@ -26,16 +26,20 @@ const elementTag = "element"
 const shortElementTag = "e"
 const classTag = "class"
 const shortClassTag = "c"
+
 // Sub options without values to be used as follows `html:"row,omitempty"`
 const optRowTag = "row"
 const optOmitEmptyTag = "omitempty"
 
 // Different patterns used for formatting output throughout
 const labelPattern = "<span>%s</span>"
+
 // Stripped pattern used for slices
 const strippedPattern = "<%s%s>%v</%s>"
+
 // Wrap pattern used by default
 const wrapPattern = "<div>%s<%s%s>%v</%s></div>"
+
 // These patterns are used in the row option
 const tablePattern = "<table>%s</table>"
 const titleRowPattern = "<thead><tr>%v</tr></thead>"
@@ -124,7 +128,7 @@ func parseByType(i interface{}, hfs htmlFieldStructure, stripElement bool, wrapE
 	case reflect.Struct:
 		wrap := ""
 		if hfs.IsRow {
-			wrap = 	colPattern
+			wrap = colPattern
 		}
 
 		subOutput, err := encode(i, hfs.IsRow, wrap)
@@ -154,20 +158,20 @@ func parseTag(field reflect.StructField) (htmlFieldStructure, error) {
 	var subOptSearch = regexp.MustCompile(`.*=.*`)
 
 	if htmlTag, ok := field.Tag.Lookup(rootTag); ok {
-		for _, v := range strings.Split(htmlTag,",") {
+		for _, v := range strings.Split(htmlTag, ",") {
 			if subOptSearch.MatchString(v) {
-				subOpts := strings.Split(v,"=")
+				subOpts := strings.Split(v, "=")
 
 				if len(subOpts) != 2 {
 					continue
 				}
 
 				switch subOpts[0] {
-				case labelTag,shortLabelTag:
+				case labelTag, shortLabelTag:
 					hfs.Label = subOpts[1]
-				case elementTag,shortElementTag:
+				case elementTag, shortElementTag:
 					hfs.Element = subOpts[1]
-				case classTag,shortClassTag:
+				case classTag, shortClassTag:
 					hfs.Class = subOpts[1]
 				}
 
