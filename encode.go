@@ -55,7 +55,7 @@ func encode(structure interface{}, isRow bool, wrap string) (string, error) {
 	v := reflect.ValueOf(structure)
 	typeOfS := v.Type()
 
-	output := ""
+	var output strings.Builder
 
 	for i := 0; i < v.NumField(); i++ {
 		hfs, err := parseTag(typeOfS.Field(i))
@@ -68,10 +68,10 @@ func encode(structure interface{}, isRow bool, wrap string) (string, error) {
 			return "", err
 		}
 
-		output += subOutput
+		output.WriteString(subOutput)
 	}
 
-	return output, nil
+	return output.String(), nil
 }
 
 func parseByType(i interface{}, hfs htmlFieldStructure, stripElement bool, wrapElement string) (string, error) {
@@ -89,26 +89,26 @@ func parseByType(i interface{}, hfs htmlFieldStructure, stripElement bool, wrapE
 		label = fmt.Sprintf(labelPattern, hfs.Label)
 	}
 
-	output := ""
+	var output strings.Builder
 	switch reflect.TypeOf(i).Kind() {
 	case reflect.Slice:
 		s := reflect.ValueOf(i)
 
-		arrOutput := ""
+		var arrOutput strings.Builder
 
 		for j := 0; j < s.Len(); j++ {
 			if hfs.IsRow &&
 				j == 0 &&
 				s.Index(j).Kind() == reflect.Struct {
-				titleRowOutput := ""
+				var titleRowOutput strings.Builder
 				for k := 0; k < s.Index(j).NumField(); k++ {
 					arrItemTags, err := parseTag(s.Index(j).Type().Field(k))
 					if err != nil {
 						return "", err
 					}
-					titleRowOutput += fmt.Sprintf(colPattern, arrItemTags.Label)
+					titleRowOutput.WriteString(fmt.Sprintf(colPattern, arrItemTags.Label))
 				}
-				arrOutput += fmt.Sprintf(titleRowPattern, titleRowOutput)
+				arrOutput.WriteString(fmt.Sprintf(titleRowPattern, titleRowOutput.String()))
 			}
 
 			sliceOutput, err := parseByType(s.Index(j).Interface(), hfs, true, "")
@@ -116,14 +116,14 @@ func parseByType(i interface{}, hfs htmlFieldStructure, stripElement bool, wrapE
 				return "", err
 			}
 
-			arrOutput += sliceOutput
+			arrOutput.WriteString(sliceOutput)
 		}
 
 		if hfs.IsRow {
-			arrOutput = fmt.Sprintf(tablePattern, arrOutput)
+			output.WriteString(fmt.Sprintf(tablePattern, arrOutput.String()))
+		} else {
+			output.WriteString(arrOutput.String())
 		}
-
-		output += arrOutput
 
 	case reflect.Struct:
 		wrap := ""
@@ -136,14 +136,14 @@ func parseByType(i interface{}, hfs htmlFieldStructure, stripElement bool, wrapE
 			return "", err
 		}
 
-		output += sprintOutput(stripElement, label, hfs.Element, elementOptions, subOutput)
+		output.WriteString(sprintOutput(stripElement, label, hfs.Element, elementOptions, subOutput))
 	default:
 		if !(hfs.OmitEmpty && isEmptyValue(reflect.ValueOf(i))) {
-			output += sprintOutput(stripElement, label, hfs.Element, elementOptions, i)
+			output.WriteString(sprintOutput(stripElement, label, hfs.Element, elementOptions, i))
 		}
 	}
 
-	return fmt.Sprintf(wrapElement, output), nil
+	return fmt.Sprintf(wrapElement, output.String()), nil
 }
 
 func parseTag(field reflect.StructField) (htmlFieldStructure, error) {
