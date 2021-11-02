@@ -1,7 +1,6 @@
 package gohtml
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -78,8 +77,8 @@ func TestEncode_Simple(t *testing.T) {
 
 	result, err := Encode(sut)
 
-	assert.Nil(t, err)
-	assert.Equal(t, "<div><span>Name</span><span class='name'>John</span></div><div><span>address</span><div class='address'><div><span>Street</span><span class='street'>1600 Pennsylvania Avenue NW</span></div><div><span>County</span><span class='county'>Washington</span></div><div><span>Country</span><span class='country'>DC</span></div><div><span>Postcode</span><span class='postcode'>20500</span></div></div></div>", result)
+	assertNil(t, err)
+	assertEqual(t, "<div><span>Name</span><span class='name'>John</span></div><div><span>address</span><div class='address'><div><span>Street</span><span class='street'>1600 Pennsylvania Avenue NW</span></div><div><span>County</span><span class='county'>Washington</span></div><div><span>Country</span><span class='country'>DC</span></div><div><span>Postcode</span><span class='postcode'>20500</span></div></div></div>", result)
 }
 
 func TestEncode_DifferentTypes(t *testing.T) {
@@ -92,8 +91,8 @@ func TestEncode_DifferentTypes(t *testing.T) {
 
 	result, err := Encode(sut)
 
-	assert.Nil(t, err)
-	assert.Equal(t, "<div><span>Name</span><span class='name'>John</span></div><div><span>Number</span><span class='number'>23</span></div><div><span>Boolean</span><span class='boolean'>false</span></div><div><span>Decimal</span><span class='decimal'>3.45</span></div>", result)
+	assertNil(t, err)
+	assertEqual(t, "<div><span>Name</span><span class='name'>John</span></div><div><span>Number</span><span class='number'>23</span></div><div><span>Boolean</span><span class='boolean'>false</span></div><div><span>Decimal</span><span class='decimal'>3.45</span></div>", result)
 }
 
 func TestEncode_Arr(t *testing.T) {
@@ -108,8 +107,8 @@ func TestEncode_Arr(t *testing.T) {
 
 	result, err := Encode(sut)
 
-	assert.Nil(t, err)
-	assert.Equal(t, "<div><span>Names</span><ul><li><div><span>Name</span><span class='name'>John Doe</span></div></li><li><div><span>Name</span><span class='name'>Jane Doe</span></div></li></ul></div>", result)
+	assertNil(t, err)
+	assertEqual(t, "<div><span>Names</span><ul><li><div><span>Name</span><span class='name'>John Doe</span></div></li><li><div><span>Name</span><span class='name'>Jane Doe</span></div></li></ul></div>", result)
 }
 
 func TestEncode_ComplexArr(t *testing.T) {
@@ -123,8 +122,8 @@ func TestEncode_ComplexArr(t *testing.T) {
 
 	result, err := Encode(sut)
 
-	assert.Nil(t, err)
-	assert.Equal(t, "<div><span>Names</span><ul><li>John Doe</li><li>Jane Doe</li></ul></div>", result)
+	assertNil(t, err)
+	assertEqual(t, "<div><span>Names</span><ul><li>John Doe</li><li>Jane Doe</li></ul></div>", result)
 }
 
 func TestEncode_Table(t *testing.T) {
@@ -137,8 +136,8 @@ func TestEncode_Table(t *testing.T) {
 
 	result, err := Encode(sut)
 
-	assert.Nil(t, err)
-	assert.Equal(t, "<table><thead><tr><td>Name</td><td>Age</td><td>location</td></tr></thead><tr><td><span>John Doe</span></td><td><span>29</span></td><td><span>Washington DC</span></td></tr><tr><td><span>Jane Doe</span></td><td><span>25</span></td><td><span>London</span></td></tr></table>", result)
+	assertNil(t, err)
+	assertEqual(t, "<table><thead><tr><td>Name</td><td>Age</td><td>location</td></tr></thead><tr><td><span>John Doe</span></td><td><span>29</span></td><td><span>Washington DC</span></td></tr><tr><td><span>Jane Doe</span></td><td><span>25</span></td><td><span>London</span></td></tr></table>", result)
 }
 
 func TestEncode_TableComplex(t *testing.T) {
@@ -157,9 +156,11 @@ func TestEncode_TableComplex(t *testing.T) {
 
 	result, err := Encode(sut)
 
-	assert.Nil(t, err)
-	assert.Equal(t, "<table><thead><tr><td>Label</td><td>Type</td><td>Description</td><td>Name List</td></tr></thead><tr><td><span>EX1</span></td><td><span>Random</span></td><td><span>This is a random example</span></td><td><ul><li>John Doe</li><li>Jane Doe</li></ul></td></tr></table>", result)
+	assertNil(t, err)
+	assertEqual(t, "<table><thead><tr><td>Label</td><td>Type</td><td>Description</td><td>Name List</td></tr></thead><tr><td><span>EX1</span></td><td><span>Random</span></td><td><span>This is a random example</span></td><td><ul><li>John Doe</li><li>Jane Doe</li></ul></td></tr></table>", result)
 }
+
+
 
 func TestEncode_OmitEmpty(t *testing.T) {
 	sut := person{
@@ -169,6 +170,6 @@ func TestEncode_OmitEmpty(t *testing.T) {
 
 	result, err := Encode(sut)
 
-	assert.Nil(t, err)
-	assert.Equal(t,"<div><span>Age</span><span>22</span></div><div><span>location</span><span>Washington DC</span></div>",result)
+	assertNil(t, err)
+	assertEqual(t, "<div><span>Age</span><span>22</span></div><div><span>location</span><span>Washington DC</span></div>", result)
 }

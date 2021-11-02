@@ -1,7 +1,6 @@
 package gohtml
 
 import (
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 )
@@ -18,8 +17,8 @@ func TestParseTag(t *testing.T) {
 
 	hfs, err := parseTag(typeOfS.Field(0))
 
-	assert.Nil(t, err)
-	assert.Equal(t, "Name", hfs.Label)
-	assert.Equal(t, "span", hfs.Element)
-	assert.Equal(t, "name", hfs.Class)
+	assertNil(t, err)
+	assertEqual(t, "Name", hfs.Label)
+	assertEqual(t, "span", hfs.Element)
+	assertEqual(t, "name", hfs.Class)
 }
