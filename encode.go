@@ -219,14 +219,7 @@ func isEmptyValue(v reflect.Value) bool {
 	case reflect.Interface, reflect.Ptr:
 		return v.IsNil()
 	case reflect.Struct:
-		// Basic O(n) solution until I can come up
-		// with a better concurrent version
-		for i := 0; i < v.NumField(); i++ {
-			if !isEmptyValue(v.Field(i)) {
-				return false
-			}
-		}
-		return true
+		return v.Interface() == reflect.New(reflect.TypeOf(v.Interface())).Elem().Interface()
 	}
 	return false
 }
