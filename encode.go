@@ -89,6 +89,10 @@ func parseByType(i interface{}, hfs htmlFieldStructure, stripElement bool, wrapE
 		label = fmt.Sprintf(labelPattern, hfs.Label)
 	}
 
+	if hfs.OmitEmpty && isEmptyValue(reflect.ValueOf(i)) {
+		return "", nil
+	}
+
 	var output strings.Builder
 	switch reflect.TypeOf(i).Kind() {
 	case reflect.Slice:
@@ -138,9 +142,7 @@ func parseByType(i interface{}, hfs htmlFieldStructure, stripElement bool, wrapE
 
 		output.WriteString(sprintOutput(stripElement, label, hfs.Element, elementOptions, subOutput))
 	default:
-		if !(hfs.OmitEmpty && isEmptyValue(reflect.ValueOf(i))) {
-			output.WriteString(sprintOutput(stripElement, label, hfs.Element, elementOptions, i))
-		}
+		output.WriteString(sprintOutput(stripElement, label, hfs.Element, elementOptions, i))
 	}
 
 	return fmt.Sprintf(wrapElement, output.String()), nil
@@ -216,6 +218,15 @@ func isEmptyValue(v reflect.Value) bool {
 		return v.Float() == 0
 	case reflect.Interface, reflect.Ptr:
 		return v.IsNil()
+	case reflect.Struct:
+		// Basic O(n) solution until I can come up
+		// with a better concurrent version
+		for i := 0; i < v.NumField(); i++ {
+			if !isEmptyValue(v.Field(i)) {
+				return false
+			}
+		}
+		return true
 	}
 	return false
 }

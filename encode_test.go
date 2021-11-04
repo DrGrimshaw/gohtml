@@ -21,7 +21,7 @@ type subTypeStruct struct {
 }
 
 type simpleStructContainer struct {
-	Names []simpleStruct `html:"e=li"`
+	Names []simpleStruct `html:"e=li,omitempty"`
 }
 
 type arrStruct struct {
@@ -60,7 +60,7 @@ type complexRowStruct struct {
 	Type        string `html:"l=Type,e=span"`
 	Description string `html:"l=Description,e=span"`
 	NameList    struct {
-		Names []string `html:"e=li"`
+		Names []string `html:"e=li,omitempty"`
 	} `html:"l=Name List,e=ul"`
 }
 
@@ -111,6 +111,22 @@ func TestEncode_Arr(t *testing.T) {
 	assertEqual(t, "<div><span>Names</span><ul><li><div><span>Name</span><span class='name'>John Doe</span></div></li><li><div><span>Name</span><span class='name'>Jane Doe</span></div></li></ul></div>", result)
 }
 
+func TestEncode_Arr_OmitEmpty(t *testing.T) {
+	sut := arrStruct{
+		NameList: simpleStructContainer{
+			Names: []simpleStruct{
+				{},
+				{Name: "Jane Doe"},
+			},
+		},
+	}
+
+	result, err := Encode(sut)
+
+	assertNil(t, err)
+	assertEqual(t, "<div><span>Names</span><ul><li><div><span>Name</span><span class='name'>Jane Doe</span></div></li></ul></div>", result)
+}
+
 func TestEncode_ComplexArr(t *testing.T) {
 	sut := complexArrStruct{
 		NameList: struct {
@@ -147,7 +163,7 @@ func TestEncode_TableComplex(t *testing.T) {
 			Type:        "Random",
 			Description: "This is a random example",
 			NameList: struct {
-				Names []string `html:"e=li"`
+				Names []string `html:"e=li,omitempty"`
 			}{
 				Names: []string{"John Doe", "Jane Doe"},
 			},
@@ -170,4 +186,24 @@ func TestEncode_OmitEmpty(t *testing.T) {
 
 	assertNil(t, err)
 	assertEqual(t, "<div><span>Age</span><span>22</span></div><div><span>location</span><span>Washington DC</span></div>", result)
+}
+
+func TestEncode_TableComplex_OmitEmpty(t *testing.T) {
+	sut := complexTableStruct{
+		Data: []complexRowStruct{{
+			Label:       "EX1",
+			Type:        "Random",
+			Description: "This is a random example",
+			NameList: struct {
+				Names []string `html:"e=li,omitempty"`
+			}{
+				Names: []string{"", "Jane Doe"},
+			},
+		}},
+	}
+
+	result, err := Encode(sut)
+
+	assertNil(t, err)
+	assertEqual(t, "<table><thead><tr><td>Label</td><td>Type</td><td>Description</td><td>Name List</td></tr></thead><tr><td><span>EX1</span></td><td><span>Random</span></td><td><span>This is a random example</span></td><td><ul><li>Jane Doe</li></ul></td></tr></table>", result)
 }
